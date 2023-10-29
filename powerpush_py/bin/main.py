@@ -1,20 +1,4 @@
-# This is a sample Python script.
-import platform
-import sys
 import tkinter as tk
-from PyQt6.QtGui import QClipboard
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel
-
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-def _get_linux_clip():
-    mime_data = QClipboard.text()
-    # mime_data = clip.mimeData()
-    clip_data_type = mime_data.formats()[0]
-    clip_data = mime_data.data(clip_data_type)
-    return clip_data_type, clip_data
 
 
 # Press the green button in the gutter to run the script.
@@ -52,13 +36,3 @@ if __name__ == '__main__':
 
     # 运行窗口
     root.mainloop()
-    # app = QApplication(sys.argv)
-
-    # clipboard = QApplication.clipboard()
-    # mime_data = clipboard.mimeData()
-    # clip_data_type = mime_data.formats()[0]
-    # if mime_data.hasImage():
-    #     print('image')
-    # clip_data = mime_data.data(clip_data_type)
-    # print(f'type: {clip_data_type}')
-    # print(f'data: {clip_data}')
