@@ -1,19 +1,30 @@
-from src.common.Constant import ModuleName, Platform
+import logging
+import threading
+
+from src.common.Constant import ModuleName, Platform, MessageType
+from src.common.Message import Message
 from src.common.Module import Module
 import win32clipboard
-from PyQt6.QtGui import QClipboard
+
+
 class Clipboard(Module):
     def __init__(self):
         super().__init__(ModuleName.CLIPBOARD)
 
     def run(self):
-        super().run()
+        # super().run()
+        logging.info(f'Start get clipboard content ...')
         # get message from other modules
+        get_clip_content = threading.Thread(self._thrd_func_get_content_from_clipboard())
+        get_clip_content.start()
 
-    def thrd_func_get_content_from_clipboard(self):
+    def _thrd_func_get_content_from_clipboard(self):
         if self.os_type == Platform.WIN:
             type, data = self._get_win_clip()
-
+            logging.debug(f'type: {type}, data: {data}')
+            self.snd_queue_lock.acquire()
+            self.snd_queue.put(Message(ModuleName.LOCAL_HUB, ModuleName.SERVER_HUB, MessageType.TEXT, data))
+            self.snd_queue_lock.release()
 
     def _get_win_clip(self):
         win32clipboard.OpenClipboard()
@@ -45,8 +56,9 @@ class Clipboard(Module):
         return type, data
 
     def _get_linux_clip(self):
-        clip = QClipboard()
-        mime_data = clip.mimeData()
-        clip_data_type = mime_data.formats()[0]
-        clip_data = mime_data.data(clip_data_type)
-        return clip_data_type, clip_data
+        pass
+        # clip = QClipboard()
+        # mime_data = clip.mimeData()
+        # clip_data_type = mime_data.formats()[0]
+        # clip_data = mime_data.data(clip_data_type)
+        # return clip_data_type, clip_data
