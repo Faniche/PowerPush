@@ -1,3 +1,4 @@
 pywin32
 colorlog
 StrEnum
+pillow

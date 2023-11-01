@@ -1,6 +1,10 @@
 import logging
 import threading
 
+import win32api
+import win32con
+from PIL import Image, ImageGrab
+
 from src.common.Constant import ModuleName, Platform, MessageType
 from src.common.Message import Message
 from src.common.Module import Module
@@ -12,22 +16,26 @@ class Clipboard(Module):
         super().__init__(ModuleName.CLIPBOARD)
 
     def run(self):
-        # super().run()
+        super().run()
         logging.info(f'Start get clipboard content ...')
         # get message from other modules
         get_clip_content = threading.Thread(self._thrd_func_get_content_from_clipboard())
         get_clip_content.start()
 
     def _thrd_func_get_content_from_clipboard(self):
-        if self.os_type == Platform.WIN:
-            type, data = self._get_win_clip()
-            logging.debug(f'type: {type}, data: {data}')
-            self.snd_queue_lock.acquire()
-            self.snd_queue.put(Message(ModuleName.LOCAL_HUB, ModuleName.SERVER_HUB, MessageType.TEXT, data))
-            self.snd_queue_lock.release()
+        while True:
+            if self.os_type == Platform.WIN:
+                type, data = self._get_win_clip()
+                logging.debug(f'type: {type}, data: {data}')
+
+                self.snd_queue_lock.acquire()
+                self.snd_queue.put(Message(ModuleName.LOCAL_HUB, ModuleName.SERVER_HUB, MessageType.TEXT, data))
+                self.snd_queue_lock.release()
 
     def _get_win_clip(self):
         win32clipboard.OpenClipboard()
+        data = str
+        clipboard_type = str
         try:
             # 获取文本内容
             if win32clipboard.IsClipboardFormatAvailable(win32clipboard.CF_TEXT):
@@ -36,13 +44,15 @@ class Clipboard(Module):
 
             # 获取图片内容
             elif win32clipboard.IsClipboardFormatAvailable(win32clipboard.CF_BITMAP):
-                data = win32clipboard.GetClipboardData(win32clipboard.CF_BITMAP)
+                im = ImageGrab.grabclipboard()
+                im.save('somefile.png', 'PNG')
+                data = 'somefile.png'
                 clipboard_type = "image/bmp"
 
             # 获取文件内容
             elif win32clipboard.IsClipboardFormatAvailable(win32clipboard.CF_HDROP):
                 data = win32clipboard.GetClipboardData(win32clipboard.CF_HDROP)
-                clipboard_type = "application/octet-stream"
+                clipboard_type = "file"
 
             else:
                 data = None
@@ -52,10 +62,20 @@ class Clipboard(Module):
             print("获取剪贴板内容出错:", e)
             data = None
             clipboard_type = None
-        win32clipboard.CloseClipboard()
-        return type, data
+        finally:
+            if clipboard_type not in ["image/bmp"]:
+                win32clipboard.CloseClipboard()
+        return clipboard_type, data
 
     def _get_linux_clip(self):
+        pass
+        # clip = QClipboard()
+        # mime_data = clip.mimeData()
+        # clip_data_type = mime_data.formats()[0]
+        # clip_data = mime_data.data(clip_data_type)
+        # return clip_data_type, clip_data
+
+    def _get_android_clip(self):
         pass
         # clip = QClipboard()
         # mime_data = clip.mimeData()
